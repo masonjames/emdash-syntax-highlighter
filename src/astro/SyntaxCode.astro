@@ -1,0 +1,297 @@
+---
+import { loadSyntaxHighlighterSettings } from "../lib/load-settings.js";
+import { buildSyntaxRenderModel } from "../lib/render-model.js";
+import type { SyntaxHighlighterSettings } from "../lib/types.js";
+
+const SETTINGS_CACHE_KEY = "__emdashSyntaxHighlighterSettings";
+
+const locals = Astro.locals as Record<string, unknown>;
+
+let settingsPromise = locals[SETTINGS_CACHE_KEY] as Promise<SyntaxHighlighterSettings> | undefined;
+if (!settingsPromise) {
+	settingsPromise = loadSyntaxHighlighterSettings();
+	locals[SETTINGS_CACHE_KEY] = settingsPromise;
+}
+
+const settings = await settingsPromise;
+const model = await buildSyntaxRenderModel(Astro.props.node, settings);
+
+const rootClasses = [
+	"emdash-syntax",
+	model?.showLineNumbers ? "emdash-syntax--with-line-numbers" : "",
+	model?.isCollapsed ? "emdash-syntax--collapsed" : "",
+	model?.wasFallback ? "emdash-syntax--fallback" : "",
+]
+	.filter(Boolean)
+	.join(" ");
+---
+
+{
+	model && (
+		<figure class={rootClasses} data-emdash-syntax>
+			<figcaption class="emdash-syntax__header">
+				<div class="emdash-syntax__meta">
+					{model.block.title ? <span class="emdash-syntax__title">{model.block.title}</span> : null}
+					<span class="emdash-syntax__badge">{model.displayLanguageLabel}</span>
+					<span class="emdash-syntax__badge">{model.lineCount} line{model.lineCount === 1 ? "" : "s"}</span>
+					{
+						model.isLongSnippet ? (
+							<span class="emdash-syntax__badge emdash-syntax__badge--subtle">Long snippet</span>
+						) : null
+					}
+					{
+						model.wasFallback ? (
+							<span
+								class="emdash-syntax__badge emdash-syntax__badge--warning"
+								title={model.fallbackReason ?? undefined}
+							>
+								Plain text fallback
+							</span>
+						) : null
+					}
+				</div>
+
+				{
+					model.showCopyButton ? (
+						<button
+							type="button"
+							class="emdash-syntax__copy-button"
+							aria-label="Copy code snippet"
+							data-emdash-syntax-copy
+							data-label="Copy"
+							disabled
+							hidden
+						>
+							Copy
+						</button>
+					) : null
+				}
+			</figcaption>
+
+			{
+				model.isCollapsed ? (
+					<details class="emdash-syntax__details">
+						<summary class="emdash-syntax__summary">
+							Show code
+							<span class="emdash-syntax__summary-note">
+								{model.lineCount} line{model.lineCount === 1 ? "" : "s"}
+							</span>
+						</summary>
+						<div class="emdash-syntax__panel" set:html={model.html} />
+					</details>
+				) : (
+					<div class="emdash-syntax__panel" set:html={model.html} />
+				)
+			}
+
+			<script is:inline>
+				(() => {
+					const root = document.currentScript?.closest("[data-emdash-syntax]");
+					if (!(root instanceof HTMLElement)) return;
+
+					const button = root.querySelector("[data-emdash-syntax-copy]");
+					if (!(button instanceof HTMLButtonElement)) return;
+
+					const supportsCopy =
+						typeof navigator !== "undefined" &&
+						typeof navigator.clipboard?.writeText === "function";
+
+					if (!supportsCopy) return;
+
+					button.hidden = false;
+					button.disabled = false;
+
+					if (!window.__emdashSyntaxCopyBound) {
+						window.__emdashSyntaxCopyBound = true;
+
+						document.addEventListener("click", async (event) => {
+							const target = event.target;
+							if (!(target instanceof Element)) return;
+
+							const copyButton = target.closest("[data-emdash-syntax-copy]");
+							if (!(copyButton instanceof HTMLButtonElement)) return;
+
+							const container = copyButton.closest("[data-emdash-syntax]");
+							if (!(container instanceof HTMLElement)) return;
+
+							const code = container.querySelector("code");
+							if (!(code instanceof HTMLElement)) return;
+
+							const label = copyButton.dataset.label || "Copy";
+							const text = code.textContent || "";
+							if (!text) return;
+
+							try {
+								await navigator.clipboard.writeText(text);
+								copyButton.textContent = "Copied";
+								window.setTimeout(() => {
+									copyButton.textContent = label;
+								}, 1600);
+							} catch {
+								copyButton.textContent = "Copy failed";
+								window.setTimeout(() => {
+									copyButton.textContent = label;
+								}, 2200);
+							}
+						});
+					}
+				})();
+			</script>
+		</figure>
+	)
+}
+
+<style is:global>
+	.emdash-syntax {
+		margin: 1.5rem 0;
+		border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+		border-radius: 1rem;
+		overflow: clip;
+		background: color-mix(in srgb, currentColor 2%, transparent);
+		box-shadow: 0 12px 32px color-mix(in srgb, currentColor 8%, transparent);
+	}
+
+	.emdash-syntax__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 0.9rem 1rem;
+		background: color-mix(in srgb, currentColor 4%, transparent);
+		border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+	}
+
+	.emdash-syntax__meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.emdash-syntax__title {
+		font-weight: 600;
+		font-size: 0.95rem;
+	}
+
+	.emdash-syntax__badge {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.2rem 0.55rem;
+		border-radius: 999px;
+		font-size: 0.75rem;
+		line-height: 1;
+		letter-spacing: 0.01em;
+		background: color-mix(in srgb, currentColor 10%, transparent);
+	}
+
+	.emdash-syntax__badge--subtle {
+		background: color-mix(in srgb, currentColor 6%, transparent);
+	}
+
+	.emdash-syntax__badge--warning {
+		background: color-mix(in srgb, #f59e0b 18%, transparent);
+		color: color-mix(in srgb, currentColor 85%, #f59e0b 15%);
+	}
+
+	.emdash-syntax__copy-button {
+		border: 0;
+		border-radius: 999px;
+		padding: 0.45rem 0.8rem;
+		font: inherit;
+		font-size: 0.82rem;
+		font-weight: 600;
+		cursor: pointer;
+		background: color-mix(in srgb, currentColor 12%, transparent);
+		color: inherit;
+		transition:
+			transform 140ms ease,
+			background-color 140ms ease;
+	}
+
+	.emdash-syntax__copy-button:hover {
+		transform: translateY(-1px);
+		background: color-mix(in srgb, currentColor 16%, transparent);
+	}
+
+	.emdash-syntax__copy-button:focus-visible {
+		outline: 2px solid currentColor;
+		outline-offset: 2px;
+	}
+
+	.emdash-syntax__details {
+		border-top: 0;
+	}
+
+	.emdash-syntax__summary {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.9rem 1rem;
+		cursor: pointer;
+		font-weight: 600;
+		list-style: none;
+	}
+
+	.emdash-syntax__summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.emdash-syntax__summary::before {
+		content: "▸";
+		transition: transform 140ms ease;
+	}
+
+	.emdash-syntax__details[open] .emdash-syntax__summary::before {
+		transform: rotate(90deg);
+	}
+
+	.emdash-syntax__summary-note {
+		font-size: 0.78rem;
+		opacity: 0.72;
+	}
+
+	.emdash-syntax__panel :where(pre.emdash-syntax__pre) {
+		margin: 0;
+		padding: 1rem 1rem 1.05rem;
+		overflow-x: auto;
+		border-radius: 0;
+		font-size: 0.92rem;
+		line-height: 1.6;
+	}
+
+	.emdash-syntax__panel :where(code.emdash-syntax__code) {
+		display: block;
+		min-width: max-content;
+	}
+
+	.emdash-syntax__panel :where(.emdash-syntax__line) {
+		display: block;
+		min-height: 1.6em;
+		padding-inline: 0.1rem;
+		border-radius: 0.35rem;
+	}
+
+	.emdash-syntax--with-line-numbers .emdash-syntax__panel :where(.emdash-syntax__line) {
+		position: relative;
+		padding-left: 3.25rem;
+	}
+
+	.emdash-syntax--with-line-numbers .emdash-syntax__panel :where(.emdash-syntax__line)::before {
+		content: attr(data-line-number);
+		position: absolute;
+		left: 0.4rem;
+		width: 2rem;
+		text-align: right;
+		opacity: 0.45;
+		user-select: none;
+	}
+
+	.emdash-syntax__panel :where(.emdash-syntax__line--highlighted) {
+		background: color-mix(in srgb, currentColor 10%, transparent);
+		box-shadow: inset 3px 0 0 color-mix(in srgb, currentColor 28%, transparent);
+	}
+
+	.emdash-syntax--collapsed .emdash-syntax__header {
+		border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+	}
+</style>

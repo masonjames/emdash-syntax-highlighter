@@ -1,0 +1,5 @@
+node_modules
+.astro
+coverage
+dist
+.DS_Store

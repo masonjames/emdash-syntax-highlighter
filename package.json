@@ -1,0 +1,62 @@
+{
+	"name": "@emdash-cms/plugin-syntax-highlighter",
+	"version": "0.1.0",
+	"description": "Portable Text syntax highlighting for EmDash CMS with SSR rendering, line numbers, highlighted lines, and copy-to-clipboard.",
+	"type": "module",
+	"main": "src/index.ts",
+	"packageManager": "pnpm@10.0.0",
+	"exports": {
+		".": "./src/index.ts",
+		"./plugin": "./src/plugin.ts",
+		"./astro": "./src/astro/index.ts"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"check": "pnpm typecheck && pnpm test",
+		"test": "vitest run",
+		"typecheck": "astro check && tsc --noEmit",
+		"prepublishOnly": "pnpm check"
+	},
+	"keywords": [
+		"emdash",
+		"cms",
+		"plugin",
+		"syntax-highlighting",
+		"code-blocks",
+		"shiki",
+		"portable-text"
+	],
+	"author": "Mason James",
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
+	"peerDependencies": {
+		"astro": ">=6.0.0-beta.0",
+		"emdash": ">=0.1.0"
+	},
+	"dependencies": {
+		"@emdash-cms/blocks": "^0.1.0",
+		"shiki": "^3.12.2"
+	},
+	"devDependencies": {
+		"@astrojs/check": "^0.9.4",
+		"@types/node": "^22.15.3",
+		"astro": "^6.0.0",
+		"typescript": "^5.8.3",
+		"vitest": "^4.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/masonjames/emdash-syntax-highlighter.git"
+	},
+	"homepage": "https://github.com/masonjames/emdash-syntax-highlighter",
+	"bugs": {
+		"url": "https://github.com/masonjames/emdash-syntax-highlighter/issues"
+	}
+}
