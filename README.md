@@ -121,6 +121,8 @@ pnpm typecheck
 pnpm test
 ```
 
+Maintainers: see [`RELEASING.md`](./RELEASING.md) for the trusted npm release workflow and marketplace compatibility note.
+
 ## Release notes
 
 - **Distribution:** trusted npm package + GitHub repository
