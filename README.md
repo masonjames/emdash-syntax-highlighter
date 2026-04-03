@@ -2,7 +2,7 @@
 
 First-class code snippets for EmDash CMS.
 
-`@emdash-cms/plugin-syntax-highlighter` adds a dedicated `syntaxCode` Portable Text block with:
+`@masonjames/emdash-syntax-highlighter` adds a dedicated `syntaxCode` Portable Text block with:
 
 - server-rendered syntax highlighting via Shiki
 - sitewide defaults for theme, line numbers, copy buttons, and collapse behavior
@@ -20,10 +20,12 @@ EmDash currently requires a **native/trusted plugin** for the combination of:
 
 That means this package installs through `plugins: []` in your EmDash config, not via the sandboxed marketplace flow.
 
+If EmDash adds marketplace support for Portable Text blocks in the future, a marketplace variant could exist. Today, the supported path is trusted npm installation via `astro.config.mjs`.
+
 ## Installation
 
 ```bash
-pnpm add @emdash-cms/plugin-syntax-highlighter
+pnpm add @masonjames/emdash-syntax-highlighter
 ```
 
 ## Usage
@@ -32,7 +34,7 @@ pnpm add @emdash-cms/plugin-syntax-highlighter
 // astro.config.mjs
 import { defineConfig } from "astro/config";
 import emdash from "emdash/astro";
-import { syntaxHighlighterPlugin } from "@emdash-cms/plugin-syntax-highlighter";
+import { syntaxHighlighterPlugin } from "@masonjames/emdash-syntax-highlighter";
 
 export default defineConfig({
 	integrations: [
@@ -121,7 +123,7 @@ pnpm test
 
 ## Release notes
 
-- **Distribution:** npm + GitHub repository
+- **Distribution:** trusted npm package + GitHub repository
 - **Execution model:** trusted/native EmDash plugin
 - **Network access:** none required
 - **Routes/storage:** none in v1

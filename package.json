@@ -1,6 +1,6 @@
 {
-	"name": "@emdash-cms/plugin-syntax-highlighter",
-	"version": "0.1.0",
+	"name": "@masonjames/emdash-syntax-highlighter",
+	"version": "0.1.1",
 	"description": "Portable Text syntax highlighting for EmDash CMS with SSR rendering, line numbers, highlighted lines, and copy-to-clipboard.",
 	"type": "module",
 	"main": "src/index.ts",
